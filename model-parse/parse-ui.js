@@ -8,6 +8,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_setClipboard
+// @grant        GM_getClipboard
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
 // @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=4
@@ -170,11 +171,7 @@
       const classMapArrayJson = JSON.stringify(Array.from(classMap));
       console.log(classMapArrayJson);
       GM_setValue("parsedData", classMapArrayJson);
-      const generatedCode = window.dartGenerator.generateDartCode(classMap);
-      const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
-      console.log(formattedCode);
-      GM_setClipboard(formattedCode);
-      showToast("Torna data parsed successfully!");
+      showToast("Data parsed successfully!");
     });
   } else if (currentURL.includes("apifox.com")) {
     addParseButton("Parse Apifox", "30vh", () => {
@@ -186,28 +183,50 @@
 
   // Add clipboard parsing buttons
   addParseButton("Parse JSON from Clipboard", "25vh", async () => {
-    const clipboardText = await navigator.clipboard.readText();
+    let clipboardText;
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      clipboardText = await navigator.clipboard.readText();
+    } else if (typeof GM_getClipboard === "function") {
+      clipboardText = await GM_getClipboard();
+    } else {
+      showToast("No clipboard access method is available.");
+      clipboardText = await promptForModelName(
+        "Json class parser",
+        "input json data"
+      );
+    }
+    if (!clipboardText) {
+      showToast("No Json data found in clipboard!");
+      return;
+    }
     const parser = window.parser.createParser("json");
     const { rootModel, classMap } = parser.parse(clipboardText);
-    console.log(classMap);
-
-    const generatedCode = window.dartGenerator.generateDartCode(classMap);
-    const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
-    console.log(formattedCode);
-    GM_setClipboard(formattedCode);
-    showToast("JSON parsed from clipboard successfully!");
+    const classMapArrayJson = JSON.stringify(Array.from(classMap));
+    console.log(classMapArrayJson);
+    GM_setValue("parsedData", classMapArrayJson);
+    showToast("Data parsed successfully!");
   });
 
   addParseButton("Parse Dart from Clipboard", "20vh", async () => {
-    const clipboardText = await navigator.clipboard.readText();
+    let clipboardText;
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      clipboardText = await navigator.clipboard.readText();
+    } else if (typeof GM_getClipboard === "function") {
+      clipboardText = await GM_getClipboard();
+    } else {
+      showToast("No clipboard access method is available.");
+      clipboardText = await promptForModelName("Dart class parser", "dart");
+    }
+    if (!clipboardText) {
+      showToast("No Dart class found in clipboard!");
+      return;
+    }
     const parser = window.parser.createParser("dart");
     const { rootModel, classMap } = parser.parse(clipboardText);
-    console.log(classMap);
-    const generatedCode = window.dartGenerator.generateDartCode(classMap);
-    const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
-    console.log(formattedCode);
-    GM_setClipboard(formattedCode);
-    showToast("Dart class parsed from clipboard successfully!");
+    const classMapArrayJson = JSON.stringify(Array.from(classMap));
+    console.log(classMapArrayJson);
+    GM_setValue("parsedData", classMapArrayJson);
+    showToast("Data parsed successfully!");
   });
 })();
 

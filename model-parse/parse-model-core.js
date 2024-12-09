@@ -18,12 +18,14 @@
 
   // Utility functions
   const capitalize = (text) =>
-    text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    text.charAt(0).toUpperCase() +
+    text.slice(1, 2).toLowerCase() +
+    text.slice(2);
 
   const generateClassName = (segments) => {
     const maxLength = 20;
     let className = segments
-      .reverse()
+      // .reverse()
       .flatMap((segment) =>
         segment.replace(/^(get|post|put|delete|patch|find)/i, "").split(/[-_]/)
       )

@@ -88,8 +88,10 @@ Map<String, dynamic> toJson() => {
   ${classModel.fields
     .map((f) => {
       const dartType = getDartType(f);
-      if (f.type == "array[object]" || f.type == "object") {
+      if (f.type == "array[object]") {
         return `'${f.name}': ${f.name}?.map((e) => e.toJson()).toList()`;
+      } else if (f.type === "object") {
+        return `'${f.name}': ${f.name}?.toJson() ?? {}`;
       } else {
         return `'${f.name}': ${f.name}`;
       }
@@ -110,7 +112,7 @@ ${classModel.className} copyWith({
       .map((f) => `${f.name}: ${f.name} ?? this.${f.name}`)
       .join(",\n      ")}
   );
-}`;
+}\n`;
   }
 
   function formatDartCode(code) {
@@ -173,28 +175,28 @@ ${classModel.className} copyWith({
   };
 
   // Add button to generate and copy Dart code
-  function addGenerateDartButton(text, top, useAsKeyword = false) {
-    const button = document.createElement("button");
-    button.textContent = text;
-    button.className = "parser-button";
-    button.style.top = top;
-    button.addEventListener("click", () => {
-      const parsedDataString = GM_getValue("parsedData");
-      if (parsedDataString) {
-        const parsedData = JSON.parse(parsedDataString);
-        const dartCode = generateDartCode(parsedData.classMap, useAsKeyword);
-        const formattedCode = formatDartCode(dartCode);
-        GM_setClipboard(formattedCode);
-        alert("Dart code generated and copied to clipboard!");
-      } else {
-        alert("No parsed data found. Please parse data first.");
-      }
-    });
-    document.body.appendChild(button);
-  }
+  // function addGenerateDartButton(text, top, useAsKeyword = false) {
+  //   const button = document.createElement("button");
+  //   button.textContent = text;
+  //   button.className = "parser-button";
+  //   button.style.top = top;
+  //   button.addEventListener("click", () => {
+  //     const parsedDataString = GM_getValue("parsedData");
+  //     if (parsedDataString) {
+  //       const parsedData = JSON.parse(parsedDataString);
+  //       const dartCode = generateDartCode(parsedData.classMap, useAsKeyword);
+  //       const formattedCode = formatDartCode(dartCode);
+  //       GM_setClipboard(formattedCode);
+  //       alert("Dart code generated and copied to clipboard!");
+  //     } else {
+  //       alert("No parsed data found. Please parse data first.");
+  //     }
+  //   });
+  //   document.body.appendChild(button);
+  // }
 
-  addGenerateDartButton("Generate Dart", "45vh");
-  addGenerateDartButton('Generate Dart (with "as")', "50vh", true);
+  // addGenerateDartButton("Generate Dart", "45vh");
+  // addGenerateDartButton('Generate Dart (with "as")', "50vh", true);
 })();
 
 // For demonstration purposes, let's generate some sample Dart code
