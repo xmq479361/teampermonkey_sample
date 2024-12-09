@@ -5,10 +5,6 @@
 // @description  Core functionality for parsing various data sources and generating Dart models
 // @match        http://torna.tclpv.com/*
 // @match        https://apifox.com/*
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @grant        GM_setClipboard
-// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 (function () {
@@ -315,34 +311,34 @@
   };
 
   // Store parsed data for other scripts to use
-  GM_setValue("parsedData", null);
+  // GM_setValue("parsedData", null);
 
-  // Parse and store data when the page loads
-  const currentURL = window.location.href;
-  if (currentURL.includes("torna.tclpv.com")) {
-    const parser = createParser("torna");
-    const parsedData = parser.parse(document.body.innerHTML);
-    GM_setValue("parsedData", JSON.stringify(parsedData));
-  } else if (currentURL.includes("apifox.com")) {
-    // Implement Apifox-specific parsing logic here
-  }
+  // // Parse and store data when the page loads
+  // const currentURL = window.location.href;
+  // if (currentURL.includes("torna.tclpv.com")) {
+  //   const parser = createParser("torna");
+  //   const parsedData = parser.parse(document.body.innerHTML);
+  //   GM_setValue("parsedData", JSON.stringify(parsedData));
+  // } else if (currentURL.includes("apifox.com")) {
+  //   // Implement Apifox-specific parsing logic here
+  // }
 
-  // Add menu commands for parsing from clipboard
-  GM_registerMenuCommand("Parse JSON from clipboard", async () => {
-    const clipboardText = await navigator.clipboard.readText();
-    const parser = createParser("json");
-    const parsedData = parser.parse(clipboardText);
-    GM_setValue("parsedData", JSON.stringify(parsedData));
-    alert("JSON parsed from clipboard");
-  });
+  // // Add menu commands for parsing from clipboard
+  // GM_registerMenuCommand("Parse JSON from clipboard", async () => {
+  //   const clipboardText = await navigator.clipboard.readText();
+  //   const parser = createParser("json");
+  //   const parsedData = parser.parse(clipboardText);
+  //   GM_setValue("parsedData", JSON.stringify(parsedData));
+  //   alert("JSON parsed from clipboard");
+  // });
 
-  GM_registerMenuCommand("Parse Dart class from clipboard", async () => {
-    const clipboardText = await navigator.clipboard.readText();
-    const parser = createParser("dart");
-    const parsedData = parser.parse(clipboardText);
-    GM_setValue("parsedData", JSON.stringify(parsedData));
-    alert("Dart class parsed from clipboard");
-  });
+  // GM_registerMenuCommand("Parse Dart class from clipboard", async () => {
+  //   const clipboardText = await navigator.clipboard.readText();
+  //   const parser = createParser("dart");
+  //   const parsedData = parser.parse(clipboardText);
+  //   GM_setValue("parsedData", JSON.stringify(parsedData));
+  //   alert("Dart class parsed from clipboard");
+  // });
 })();
 
 function getDartType(f) {

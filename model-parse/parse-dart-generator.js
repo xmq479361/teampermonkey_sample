@@ -5,11 +5,7 @@
 // @description  Dart code generation for multi-source HTML to Dart Parser
 // @match        http://torna.tclpv.com/*
 // @match        https://apifox.com/*
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @grant        GM_setClipboard
-// @grant        GM_registerMenuCommand
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=4
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=6
 // ==/UserScript==
 
 (function () {
@@ -39,7 +35,7 @@
       dartCode += "\n";
       dartCode += generateToJson(classModel);
       dartCode += "\n";
-      dartCode += generateCopyWith(classModel);
+      // dartCode += generateCopyWith(classModel);
 
       dartCode += `}\n\n`;
     }

@@ -3,22 +3,34 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.6
 // @description  UI components for multi-source HTML to Dart Parser
-// @match        http://torna.tclpv.com/*
-// @match        https://apifox.com/*
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @match        https://*
 // @grant        GM_setClipboard
 // @grant        GM_getClipboard
-// @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=4
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=4
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=6
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=6
 // ==/UserScript==
 
 (function () {
   "use strict";
 
+  const currentDomain = window.location.hostname;
+  console.log("currentDomain:", currentDomain);
+  const isTornaSite = currentDomain.includes("torna.tclpv.com");
+  const isApifoxSite = currentDomain.includes("apifox.com");
   GM_addStyle(`
+      .generate-button {
+          position: fixed;
+          right: 20px;
+          z-index: 1000;
+          padding: 5px 10px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 15px;
+          cursor: pointer;
+          margin-bottom: 10px;
+      }
       .parser-button {
           position: fixed;
           right: 20px;
@@ -122,59 +134,100 @@
     button.textContent = text;
     button.className = "parser-button";
     button.style.top = top;
+    button.style.backgroundColor = "#007BFF";
+    button.style.color = "white";
+    button.style.border = "none";
+    button.style.borderRadius = "5px";
+    button.style.padding = "10px 15px";
+    button.style.cursor = "pointer";
     button.addEventListener("click", onClick);
     document.body.appendChild(button);
   }
 
+  function addGenerateButton(text, top, onClick) {
+    const button = document.createElement("button");
+    button.textContent = text;
+    button.className = "generate-button";
+    button.style.top = top;
+    button.style.backgroundColor = "#28A745";
+    button.style.color = "white";
+    button.style.border = "none";
+    button.style.borderRadius = "5px";
+    button.style.padding = "10px 15px";
+    button.style.cursor = "pointer";
+    button.addEventListener("click", onClick);
+    document.body.appendChild(button);
+  }
+
+  let classMap = new Map();
+  function updateButtonState() {
+    const isEnabled = classMap.size > 0;
+    // document.querySelectorAll(".parser-button").forEach((button) => {
+    //   button.disabled = !isEnabled;
+    //   button.style.opacity = isEnabled ? "1" : "0.5";
+    //   button.style.cursor = isEnabled ? "pointer" : "not-allowed";
+    // });
+    document.querySelectorAll(".generate-button").forEach((button) => {
+      button.disabled = !isEnabled;
+      button.style.opacity = isEnabled ? "1" : "0.5";
+      button.style.cursor = isEnabled ? "pointer" : "not-allowed";
+    });
+  }
+
   // Add UI buttons
-  addParseButton("Generate Dart", "40vh", async () => {
-    const jsonString = GM_getValue("parsedData");
-    if (jsonString) {
-      console.log(jsonString);
-      const classMap = new Map(JSON.parse(jsonString));
-      const generatedCode = window.dartGenerator.generateDartCode(classMap);
-      const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
-      console.log(formattedCode);
-      GM_setClipboard(formattedCode);
-      showToast("Dart model generated and copied to clipboard!");
-    } else {
-      showToast("No valid data found. Please parse data first.");
+  addGenerateButton("Generate Dart", "40vh", async () => {
+    try {
+      if (classMap.size > 0) {
+        const generatedCode = window.dartGenerator.generateDartCode(classMap);
+        const formattedCode =
+          window.dartGenerator.formatDartCode(generatedCode);
+        GM_setClipboard(formattedCode);
+        showToast("Dart model generated and copied to clipboard!");
+      } else {
+        showToast("No valid data found. Please parse data first.");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("An error occurred while generating Dart model.");
     }
   });
 
-  addParseButton('Generate Dart (with "as")', "35vh", async () => {
-    const jsonString = GM_getValue("parsedData");
-    if (jsonString) {
-      console.log(jsonString);
-      const classMap = new Map(JSON.parse(jsonString));
-      const generatedCode = window.dartGenerator.generateDartCode(
-        classMap,
-        true
-      );
-      const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
-      console.log(formattedCode);
-      GM_setClipboard(formattedCode);
-      showToast(
-        'Dart model (with "as" syntax) generated and copied to clipboard!'
-      );
-    } else {
-      showToast("No valid data found. Please parse data first.");
+  addGenerateButton('Generate Dart (with "as")', "35vh", async () => {
+    try {
+      if (classMap.size > 0) {
+        const generatedCode = window.dartGenerator.generateDartCode(
+          classMap,
+          true
+        );
+        const formattedCode =
+          window.dartGenerator.formatDartCode(generatedCode);
+        console.log(formattedCode);
+        GM_setClipboard(formattedCode);
+        showToast(
+          'Dart model (with "as" syntax) generated and copied to clipboard!'
+        );
+      } else {
+        showToast("No valid data found. Please parse data first.");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("An error occurred while generating Dart model.");
     }
   });
 
   // Add site-specific buttons
-  const currentURL = window.location.href;
-  if (currentURL.includes("torna.tclpv.com")) {
-    addParseButton("Parse Torna", "30vh", () => {
+  if (isTornaSite) {
+    addParseButton("Parse Torna Response", "30vh", () => {
       const parser = window.parser.createParser("torna");
-      const { rootModel, classMap } = parser.parse(document.body.innerHTML);
-      const classMapArrayJson = JSON.stringify(Array.from(classMap));
-      console.log(classMapArrayJson);
-      GM_setValue("parsedData", classMapArrayJson);
+      const { rootModel, classMap: parsedClassMap } = parser.parse(
+        document.body.innerHTML
+      );
+      classMap = parsedClassMap;
+      updateButtonState();
       showToast("Data parsed successfully!");
     });
-  } else if (currentURL.includes("apifox.com")) {
-    addParseButton("Parse Apifox", "30vh", () => {
+  } else if (isApifoxSite) {
+    addParseButton("Parse Apifox Response", "30vh", () => {
       const parser = window.parser.createParser("apifox");
       // Implement Apifox-specific parsing logic here
       showToast("Apifox parsing not yet implemented");
@@ -190,20 +243,16 @@
       clipboardText = await GM_getClipboard();
     } else {
       showToast("No clipboard access method is available.");
-      clipboardText = await promptForModelName(
-        "Json class parser",
-        "input json data"
-      );
+      return;
     }
     if (!clipboardText) {
-      showToast("No Json data found in clipboard!");
+      showToast("No JSON data found in clipboard!");
       return;
     }
     const parser = window.parser.createParser("json");
-    const { rootModel, classMap } = parser.parse(clipboardText);
-    const classMapArrayJson = JSON.stringify(Array.from(classMap));
-    console.log(classMapArrayJson);
-    GM_setValue("parsedData", classMapArrayJson);
+    const { rootModel, classMap: parsedClassMap } = parser.parse(clipboardText);
+    classMap = parsedClassMap;
+    updateButtonState();
     showToast("Data parsed successfully!");
   });
 
@@ -215,19 +264,19 @@
       clipboardText = await GM_getClipboard();
     } else {
       showToast("No clipboard access method is available.");
-      clipboardText = await promptForModelName("Dart class parser", "dart");
+      return;
     }
     if (!clipboardText) {
       showToast("No Dart class found in clipboard!");
       return;
     }
     const parser = window.parser.createParser("dart");
-    const { rootModel, classMap } = parser.parse(clipboardText);
-    const classMapArrayJson = JSON.stringify(Array.from(classMap));
-    console.log(classMapArrayJson);
-    GM_setValue("parsedData", classMapArrayJson);
+    const { rootModel, classMap: parsedClassMap } = parser.parse(clipboardText);
+    classMap = parsedClassMap;
+    updateButtonState();
     showToast("Data parsed successfully!");
   });
+  updateButtonState();
 })();
 
 console.log("UI components added to the page");
