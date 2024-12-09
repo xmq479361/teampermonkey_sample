@@ -10,8 +10,8 @@
 // @grant        GM_setClipboard
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=3
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=3
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=4
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=4
 // ==/UserScript==
 
 (function () {

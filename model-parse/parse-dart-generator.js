@@ -9,7 +9,7 @@
 // @grant        GM_getValue
 // @grant        GM_setClipboard
 // @grant        GM_registerMenuCommand
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=3
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=4
 // ==/UserScript==
 
 (function () {
@@ -182,11 +182,7 @@ ${classModel.className} copyWith({
       const parsedDataString = GM_getValue("parsedData");
       if (parsedDataString) {
         const parsedData = JSON.parse(parsedDataString);
-        const dartCode = generateDartCode(
-          parsedData.rootModel,
-          parsedData.classMap,
-          useAsKeyword
-        );
+        const dartCode = generateDartCode(parsedData.classMap, useAsKeyword);
         const formattedCode = formatDartCode(dartCode);
         GM_setClipboard(formattedCode);
         alert("Dart code generated and copied to clipboard!");
@@ -232,10 +228,7 @@ const sampleClassMap = new Map([
   ],
 ]);
 
-const generatedCode = window.dartGenerator.generateDartCode(
-  { className: "UserModel" },
-  sampleClassMap
-);
+const generatedCode = window.dartGenerator.generateDartCode(sampleClassMap);
 const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
 console.log("Generated Dart code:");
 console.log(formattedCode);
