@@ -1,13 +1,15 @@
 // ==UserScript==
-// @name         Torna HTML to Dart Parser - Dart Generator
+// @name         parse-dart-generator.js
 // @namespace    http://tampermonkey.net/
 // @version      0.6
 // @description  Dart code generation for multi-source HTML to Dart Parser
 // @match        http://torna.tclpv.com/*
 // @match        https://apifox.com/*
+// @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_setClipboard
-// @require      https://github.com/xmq479361/teampermonkey_sample/model-parse/parse-model-core.js
+// @grant        GM_registerMenuCommand
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js
 // ==/UserScript==
 
 (function () {

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         parse-model-core.js
+// @name         parse-core.js
 // @namespace    http://tampermonkey.net/
 // @version      0.7
 // @description  Core functionality for parsing various data sources and generating Dart models
@@ -306,7 +306,7 @@
   };
 
   // Export functions and classes to be used by other scripts
-  window.tornaParser = {
+  window.parser = {
     createParser,
     generateClassName,
     capitalize,
@@ -363,9 +363,9 @@ function getDartType(f) {
 }
 
 // For demonstration purposes, let's simulate parsing different data sources
-const tornaParser = window.tornaParser.createParser("torna");
-const jsonParser = window.tornaParser.createParser("json");
-const dartParser = window.tornaParser.createParser("dart");
+const tornaParser = window.parser.createParser("torna");
+const jsonParser = window.parser.createParser("json");
+const dartParser = window.parser.createParser("dart");
 
 const sampleHtml = `
 <ul>

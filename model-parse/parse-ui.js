@@ -1,43 +1,46 @@
 // ==UserScript==
-// @name         Torna HTML to Dart Parser - UI
+// @name         parse-ui.js
 // @namespace    http://tampermonkey.net/
 // @version      0.6
 // @description  UI components for multi-source HTML to Dart Parser
 // @match        http://torna.tclpv.com/*
 // @match        https://apifox.com/*
+// @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_setClipboard
+// @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
-// @require      https://github.com/xmq479361/teampermonkey_sample/model-parse/parse-model-core.js
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js
 // ==/UserScript==
 
 (function () {
   "use strict";
 
   GM_addStyle(`
-        .parser-button {
-            position: fixed;
-            right: 20px;
-            z-index: 1000;
-            padding: 5px 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-        .parser-toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 10000;
-        }
-    `);
+      .parser-button {
+          position: fixed;
+          right: 20px;
+          z-index: 1000;
+          padding: 5px 10px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 15px;
+          cursor: pointer;
+          margin-bottom: 10px;
+      }
+      .parser-toast {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          z-index: 10000;
+      }
+  `);
 
   function showToast(message, duration = 3000) {
     const toast = document.createElement("div");
@@ -51,34 +54,34 @@
     return new Promise((resolve) => {
       const modal = document.createElement("div");
       modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 10001;
-            `;
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-color: rgba(0, 0, 0, 0.5);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              z-index: 10001;
+          `;
 
       const content = document.createElement("div");
       content.style.cssText = `
-                background-color: white;
-                padding: 20px;
-                border-radius: 5px;
-            `;
+              background-color: white;
+              padding: 20px;
+              border-radius: 5px;
+          `;
 
       const input = document.createElement("input");
       input.type = "text";
       input.value = "ResponseModel";
       input.placeholder = "Enter class name";
       input.style.cssText = `
-                margin-bottom: 10px;
-                width: 100%;
-                padding: 5px;
-            `;
+              margin-bottom: 10px;
+              width: 100%;
+              padding: 5px;
+          `;
 
       const submitButton = document.createElement("button");
       submitButton.textContent = "Submit";
@@ -152,18 +155,35 @@
   const currentURL = window.location.href;
   if (currentURL.includes("torna.tclpv.com")) {
     addParseButton("Parse Torna", "30vh", () => {
-      const parser = window.tornaParser.createParser("torna");
+      const parser = window.parser.createParser("torna");
       const parsedData = parser.parse(document.body.innerHTML);
       GM_setValue("parsedData", JSON.stringify(parsedData));
       showToast("Torna data parsed successfully!");
     });
   } else if (currentURL.includes("apifox.com")) {
     addParseButton("Parse Apifox", "30vh", () => {
-      const parser = window.tornaParser.createParser("apifox");
+      const parser = window.parser.createParser("apifox");
       // Implement Apifox-specific parsing logic here
       showToast("Apifox parsing not yet implemented");
     });
   }
+
+  // Add clipboard parsing buttons
+  addParseButton("Parse JSON from Clipboard", "25vh", async () => {
+    const clipboardText = await navigator.clipboard.readText();
+    const parser = window.parser.createParser("json");
+    const parsedData = parser.parse(clipboardText);
+    GM_setValue("parsedData", JSON.stringify(parsedData));
+    showToast("JSON parsed from clipboard successfully!");
+  });
+
+  addParseButton("Parse Dart from Clipboard", "20vh", async () => {
+    const clipboardText = await navigator.clipboard.readText();
+    const parser = window.parser.createParser("dart");
+    const parsedData = parser.parse(clipboardText);
+    GM_setValue("parsedData", JSON.stringify(parsedData));
+    showToast("Dart class parsed from clipboard successfully!");
+  });
 })();
 
 console.log("UI components added to the page");
