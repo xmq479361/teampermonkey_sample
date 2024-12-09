@@ -10,7 +10,8 @@
 // @grant        GM_setClipboard
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=3
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=3
 // ==/UserScript==
 
 (function () {
@@ -126,11 +127,14 @@
 
   // Add UI buttons
   addParseButton("Generate Dart", "40vh", async () => {
-    const parsedDataString = GM_getValue("parsedData");
-    if (parsedDataString) {
-      const parsedData = JSON.parse(parsedDataString);
-      // Process the data and generate Dart code
-      // This would call functions from another script that handles Dart code generation
+    const jsonString = GM_getValue("parsedData");
+    if (jsonString) {
+      console.log(jsonString);
+      const classMap = new Map(JSON.parse(jsonString));
+      const generatedCode = window.dartGenerator.generateDartCode(classMap);
+      const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
+      console.log(formattedCode);
+      GM_setClipboard(formattedCode);
       showToast("Dart model generated and copied to clipboard!");
     } else {
       showToast("No valid data found. Please parse data first.");
@@ -138,11 +142,17 @@
   });
 
   addParseButton('Generate Dart (with "as")', "35vh", async () => {
-    const parsedDataString = GM_getValue("parsedData");
-    if (parsedDataString) {
-      const parsedData = JSON.parse(parsedDataString);
-      // Process the data and generate Dart code with 'as' syntax
-      // This would call functions from another script that handles Dart code generation
+    const jsonString = GM_getValue("parsedData");
+    if (jsonString) {
+      console.log(jsonString);
+      const classMap = new Map(JSON.parse(jsonString));
+      const generatedCode = window.dartGenerator.generateDartCode(
+        classMap,
+        true
+      );
+      const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
+      console.log(formattedCode);
+      GM_setClipboard(formattedCode);
       showToast(
         'Dart model (with "as" syntax) generated and copied to clipboard!'
       );
@@ -156,8 +166,14 @@
   if (currentURL.includes("torna.tclpv.com")) {
     addParseButton("Parse Torna", "30vh", () => {
       const parser = window.parser.createParser("torna");
-      const parsedData = parser.parse(document.body.innerHTML);
-      GM_setValue("parsedData", JSON.stringify(parsedData));
+      const { rootModel, classMap } = parser.parse(document.body.innerHTML);
+      const classMapArrayJson = JSON.stringify(Array.from(classMap));
+      console.log(classMapArrayJson);
+      GM_setValue("parsedData", classMapArrayJson);
+      const generatedCode = window.dartGenerator.generateDartCode(classMap);
+      const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
+      console.log(formattedCode);
+      GM_setClipboard(formattedCode);
       showToast("Torna data parsed successfully!");
     });
   } else if (currentURL.includes("apifox.com")) {
@@ -172,16 +188,25 @@
   addParseButton("Parse JSON from Clipboard", "25vh", async () => {
     const clipboardText = await navigator.clipboard.readText();
     const parser = window.parser.createParser("json");
-    const parsedData = parser.parse(clipboardText);
-    GM_setValue("parsedData", JSON.stringify(parsedData));
+    const { rootModel, classMap } = parser.parse(clipboardText);
+    console.log(classMap);
+
+    const generatedCode = window.dartGenerator.generateDartCode(classMap);
+    const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
+    console.log(formattedCode);
+    GM_setClipboard(formattedCode);
     showToast("JSON parsed from clipboard successfully!");
   });
 
   addParseButton("Parse Dart from Clipboard", "20vh", async () => {
     const clipboardText = await navigator.clipboard.readText();
     const parser = window.parser.createParser("dart");
-    const parsedData = parser.parse(clipboardText);
-    GM_setValue("parsedData", JSON.stringify(parsedData));
+    const { rootModel, classMap } = parser.parse(clipboardText);
+    console.log(classMap);
+    const generatedCode = window.dartGenerator.generateDartCode(classMap);
+    const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
+    console.log(formattedCode);
+    GM_setClipboard(formattedCode);
     showToast("Dart class parsed from clipboard successfully!");
   });
 })();

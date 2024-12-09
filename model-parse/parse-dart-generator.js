@@ -9,13 +9,13 @@
 // @grant        GM_getValue
 // @grant        GM_setClipboard
 // @grant        GM_registerMenuCommand
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=1
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=3
 // ==/UserScript==
 
 (function () {
   "use strict";
 
-  function generateDartCode(rootModel, classMap, useAsKeyword = false) {
+  function generateDartCode(classMap, useAsKeyword = false) {
     let dartCode = "";
 
     function generateClass(classModel) {
@@ -72,7 +72,7 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
           : `${f.name}: ${dartType}.fromJson(json['${f.name}'] as Map<String, dynamic>)`;
       } else {
         return useAsKeyword
-          ? `${f.name}: json.getAs${window.tornaParser.capitalize(dartType)}('${
+          ? `${f.name}: json.getAs${window.parser.capitalize(dartType)}('${
               f.name
             }')`
           : `${f.name}: json['${f.name}'] as ${dartType}?`;
