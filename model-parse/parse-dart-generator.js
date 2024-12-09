@@ -9,7 +9,7 @@
 // @grant        GM_getValue
 // @grant        GM_setClipboard
 // @grant        GM_registerMenuCommand
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=1
 // ==/UserScript==
 
 (function () {
@@ -51,66 +51,66 @@
 
   function generateFromJson(classModel, useAsKeyword) {
     return `
-  factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
+factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
       classModel.className
     }(
-    ${classModel.fields
-      .map((f) => {
-        const dartType = getDartType(f);
-        if (f.type === "array[object]") {
-          return `${f.name}: (json['${
-            f.name
-          }'] as List<dynamic>?)?.map((e) => ${getGenericType(
-            f
-          )}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
-        } else if (dartType.startsWith("List")) {
-          const subType = getGenericType(f);
-          return `${f.name}: (json['${f.name}'] as List<dynamic>?)?.map((e) => e as ${subType}).toList() ?? []`;
-        } else if (f.type === "object") {
-          return useAsKeyword
-            ? `${f.name}: ${dartType}.fromJson(json.getAsMap('${f.name}'))`
-            : `${f.name}: ${dartType}.fromJson(json['${f.name}'] as Map<String, dynamic>)`;
-        } else {
-          return useAsKeyword
-            ? `${f.name}: json.getAs${window.tornaParser.capitalize(
-                dartType
-              )}('${f.name}')`
-            : `${f.name}: json['${f.name}'] as ${dartType}?`;
-        }
-      })
-      .join(",\n    ")}
-  );`;
+  ${classModel.fields
+    .map((f) => {
+      const dartType = getDartType(f);
+      if (f.type === "array[object]") {
+        return `${f.name}: (json['${
+          f.name
+        }'] as List<dynamic>?)?.map((e) => ${getGenericType(
+          f
+        )}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
+      } else if (dartType.startsWith("List")) {
+        const subType = getGenericType(f);
+        return `${f.name}: (json['${f.name}'] as List<dynamic>?)?.map((e) => e as ${subType}).toList() ?? []`;
+      } else if (f.type === "object") {
+        return useAsKeyword
+          ? `${f.name}: ${dartType}.fromJson(json.getAsMap('${f.name}'))`
+          : `${f.name}: ${dartType}.fromJson(json['${f.name}'] as Map<String, dynamic>)`;
+      } else {
+        return useAsKeyword
+          ? `${f.name}: json.getAs${window.tornaParser.capitalize(dartType)}('${
+              f.name
+            }')`
+          : `${f.name}: json['${f.name}'] as ${dartType}?`;
+      }
+    })
+    .join(",\n    ")}
+);`;
   }
 
   function generateToJson(classModel) {
     return `
-  Map<String, dynamic> toJson() => {
-    ${classModel.fields
-      .map((f) => {
-        const dartType = getDartType(f);
-        if (f.type == "array[object]" || f.type == "object") {
-          return `'${f.name}': ${f.name}?.map((e) => e.toJson()).toList()`;
-        } else {
-          return `'${f.name}': ${f.name}`;
-        }
-      })
-      .join(",\n    ")}
-  };`;
+Map<String, dynamic> toJson() => {
+  ${classModel.fields
+    .map((f) => {
+      const dartType = getDartType(f);
+      if (f.type == "array[object]" || f.type == "object") {
+        return `'${f.name}': ${f.name}?.map((e) => e.toJson()).toList()`;
+      } else {
+        return `'${f.name}': ${f.name}`;
+      }
+    })
+    .join(",\n    ")}
+};`;
   }
 
   function generateCopyWith(classModel) {
     return `
-  ${classModel.className} copyWith({
+${classModel.className} copyWith({
+  ${classModel.fields
+    .map((f) => `${getDartType(f)}? ${f.name}`)
+    .join(",\n    ")}
+}) {
+  return ${classModel.className}(
     ${classModel.fields
-      .map((f) => `${getDartType(f)}? ${f.name}`)
-      .join(",\n    ")}
-  }) {
-    return ${classModel.className}(
-      ${classModel.fields
-        .map((f) => `${f.name}: ${f.name} ?? this.${f.name}`)
-        .join(",\n      ")}
-    );
-  }`;
+      .map((f) => `${f.name}: ${f.name} ?? this.${f.name}`)
+      .join(",\n      ")}
+  );
+}`;
   }
 
   function formatDartCode(code) {
@@ -130,6 +130,40 @@
       }
     });
     return formattedLines.join("\n");
+  }
+
+  function getDartType(f) {
+    const { type, typeStr, fields } = f;
+    switch (type.toLowerCase()) {
+      case "integer":
+        return "int";
+      case "number":
+        return "double";
+      case "boolean":
+        return "bool";
+      case "array":
+      case "array[object]":
+        return typeStr || "List";
+      case "object":
+        return fields && fields.length > 0 ? typeStr : "Map<String, dynamic>";
+      default:
+        return "String";
+    }
+  }
+
+  function getGenericType(f) {
+    const { type, typeStr } = f;
+    if (type.startsWith("array") || (typeStr && typeStr.startsWith("List"))) {
+      if (typeStr) {
+        const match = typeStr.match(/List<(\w+)>/);
+        if (match) return match[1];
+      }
+      if (type.startsWith("array")) {
+        const match = type.match(/array\[(\w+)\]/);
+        return match ? match[1] : "dynamic";
+      }
+    }
+    return type;
   }
 
   // Export functions to be used by other scripts
@@ -155,9 +189,9 @@
         );
         const formattedCode = formatDartCode(dartCode);
         GM_setClipboard(formattedCode);
-        showToast("Dart code generated and copied to clipboard!");
+        alert("Dart code generated and copied to clipboard!");
       } else {
-        showToast("No parsed data found. Please parse data first.");
+        alert("No parsed data found. Please parse data first.");
       }
     });
     document.body.appendChild(button);

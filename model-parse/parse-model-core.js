@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         parse-core.js
+// @name         parse-model-core.js
 // @namespace    http://tampermonkey.net/
 // @version      0.7
 // @description  Core functionality for parsing various data sources and generating Dart models
