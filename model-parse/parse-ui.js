@@ -215,11 +215,8 @@
       parseData(window.parser.createParser("torna"), document.body.innerHTML);
     });
   } else if (isApifoxSite) {
-    addParseButton("Parse Apifox Response", "30vh", () => {
-      // parseData(window.parser.createParser("apifox"), document.body.innerHTML);
-      const parser = window.parser.createParser("apifox");
-      // Implement Apifox-specific parsing logic here
-      showToast("Apifox parsing not yet implemented");
+    addParseButton("Parse Apifox Response", "20vh", () => {
+      parseData(window.parser.createParser("apifox"), document.body.innerHTML);
     });
   }
   addParseButton("Clipboard Dart", "25vh", async () => {
