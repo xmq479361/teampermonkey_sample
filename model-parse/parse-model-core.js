@@ -180,25 +180,75 @@
     parse(html) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
-      const idRootNode = doc.querySelector("#mosaic-provider-react-aria-0-1");
-      const rootNode = idRootNode.querySelector(".JsonSchemaViewer");
-      return this.parseNode(rootNode);
+      const idRootNode = doc.querySelectorAll(".group-content");
+      const rootNode =
+        idRootNode[idRootNode.length - 1].querySelector(".JsonSchemaViewer");
+      return this.parseApifoxHtmlToJson(rootNode, "Demo");
     }
 
-    parseNode(node) {
-      const result = {};
-      const children = node.querySelectorAll(
-        ':scope > [data-level="0"] > div > .index_node__G6-Qx'
-      );
+    parseApifoxHtmlToJson(rootNode, baseName) {
+      const rootModel = {
+        name: baseName,
+        fields: [],
+        type: "object",
+        className: baseName,
+      };
+      const stack = [rootModel];
+      const classMap = new Map([[rootModel.className, rootModel]]);
 
-      children.forEach((child) => {
-        const { name, properties } = this.parseProperty(child);
-        if (name) {
-          result[name] = properties;
+      const nodes = rootNode.querySelectorAll(".index_node__G6-Qx");
+
+      for (const node of nodes) {
+        const level = parseInt(
+          node.closest("[data-level]")?.getAttribute("data-level") || "0"
+        );
+
+        while (stack.length > level + 1) {
+          stack.pop();
         }
-      });
 
-      return result;
+        const parentClass = stack[stack.length - 1];
+        const { name, properties } = this.parseProperty(node);
+
+        if (name) {
+          const field = {
+            name,
+            type: properties.type,
+            description: properties.description,
+            optional: properties.optional,
+          };
+
+          if (
+            properties.type === "object" ||
+            properties.type.startsWith("array")
+          ) {
+            field.fields = [];
+            field.className = this.generateClassName(
+              name,
+              parentClass.className
+            );
+
+            const isBasicType =
+              properties.type.startsWith("array") &&
+              !properties.type.includes("object");
+            field.typeStr = properties.type.startsWith("array")
+              ? `List<${
+                  isBasicType ? this.getDartType(field) : field.className
+                }>`
+              : field.className;
+            field.isBasicType = isBasicType;
+
+            parentClass.fields.push(field);
+            stack.push(field);
+            classMap.set(field.className, field);
+          } else {
+            field.typeStr = this.getDartType(field);
+            parentClass.fields.push(field);
+          }
+        }
+      }
+
+      return { rootModel, classMap };
     }
 
     parseProperty(node) {
@@ -209,7 +259,9 @@
 
       const name = nameElement.textContent.trim();
       const typeElement = node.querySelector(".sl-text-muted-big.sl-type");
-      const type = typeElement ? typeElement.textContent.trim() : "object";
+      const type = typeElement
+        ? typeElement.textContent.trim().split("|")[0].trim()
+        : "object";
       const descriptionElement = node.querySelector(
         ".index_additionalInformation__title__cjvSn"
       );
@@ -218,29 +270,14 @@
         : "";
       const isOptional = node.querySelector(".index_optional__O33wK") !== null;
 
-      let properties = {
-        type: type,
-        description: description,
-        optional: isOptional,
+      return {
+        name,
+        properties: {
+          type: type,
+          description: description,
+          optional: isOptional,
+        },
       };
-
-      if (type.includes("object")) {
-        const childrenContainer = node.querySelector(
-          ".index_child-stack__WPMqo"
-        );
-        if (childrenContainer) {
-          properties.properties = this.parseNode(childrenContainer);
-        }
-      } else if (type.includes("array")) {
-        const childrenContainer = node.querySelector(
-          ".index_child-stack__WPMqo"
-        );
-        if (childrenContainer) {
-          properties.items = this.parseNode(childrenContainer);
-        }
-      }
-
-      return { name, properties };
     }
   }
 

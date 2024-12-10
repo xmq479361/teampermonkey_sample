@@ -159,7 +159,7 @@
 
   function parseData(parser, data) {
     const { rootModel, classMap: parsedClassMap } = parser.parse(data);
-    classMap = parsedClassMap;
+    classMap = parsedClassMap || {};
     updateButtonState();
     if (classMap.size > 0) {
       showToast("Data parsed successfully!");
