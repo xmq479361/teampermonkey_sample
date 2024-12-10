@@ -90,7 +90,16 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
   }
 
   function isBasicType(type) {
-    return ["integer", "number", "boolean", "string"].includes(type);
+    return [
+      "integer",
+      "number",
+      "boolean",
+      "string",
+      "int",
+      "double",
+      "bool",
+      "String",
+    ].includes(type);
   }
 
   function generateToJson(classModel) {
