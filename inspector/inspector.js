@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Enhanced HTML Element Inspector (Advanced)
+// @name         inject-inspector.js
 // @namespace    http://tampermonkey.net/
 // @version      1.4
 // @description  Inspect and interact with HTML elements on demand
@@ -17,11 +17,22 @@
   let hoverTimeout = null;
   const whitelist = {
     class: ["element-highlight", "activate-inspector"],
-    _target: ["_blank", ""],
+    target: ["_blank", ""],
   };
   // 过滤属性
-  function isInWhiteList(attribute, value) {
-    return whitelist[attribute] == "*" || whitelist[attribute]?.includes(value);
+  function removeBlackAttr(attrName, value) {
+    const rule = whitelist[attrName]; // 获取白名单规则
+    // 如果规则为 "*"，返回空字符串（代表此属性完全允许）
+    const oldValue = value;
+    if (rule === "*") return "";
+    // 如果规则是数组，则移除规则中匹配的值
+    if (Array.isArray(rule)) {
+      rule.forEach((item) => {
+        value = value.replace(new RegExp(`\\b${item}\\b`, "g"), ""); // 使用正则匹配精确词
+      });
+    }
+    console.log(`${oldValue} => ${value.trim()}`);
+    return { name: attrName, value: value.trim() }; // 去除可能存在的多余空格
   }
   // 添加样式
   GM_addStyle(`
@@ -63,7 +74,6 @@
               border-radius: 5px;
               font-size: 12px;
               cursor: pointer;
-              text-align: center;
           }
           .info-popup .copyable:hover {
               background: #0056b3;
@@ -99,18 +109,18 @@
           .activate-inspector {
               position: fixed;
               top: 20px;
-              left: 20px;
+              right: 20px;
               z-index: 9999;
               background: #007BFF;
               color: #fff;
               border: none;
-              border-radius: 5px;
+              border-radius: 25px;
               padding: 10px 15px;
               cursor: pointer;
               font-size: 14px;
           }
           .activate-inspector:hover {
-              background: #0056b3;
+              background: #de308a;
           }
       `);
 
@@ -125,21 +135,22 @@
 
   // 初始化激活按钮
   const activateButton = document.createElement("button");
-  activateButton.textContent = "Activate Inspector";
+  activateButton.textContent = "Hk";
   activateButton.className = "activate-inspector";
   document.body.appendChild(activateButton);
 
   activateButton.addEventListener("click", () => {
     isActive = !isActive;
-    activateButton.textContent = isActive
-      ? "Deactivate Inspector"
-      : "Activate Inspector";
+    activateButton.textContent = isActive ? "-X-" : "Hk";
     if (!isActive) {
+      activateButton.style.backgroundColor = "#007BFF";
       removeHighlight();
       if (popupElement) {
         popupElement.remove();
         popupElement = null;
       }
+    } else {
+      activateButton.style.backgroundColor = "#de308a";
     }
   });
 
@@ -195,16 +206,13 @@
 
     popupElement = document.createElement("div");
     popupElement.className = "info-popup";
-    popupElement.style.left = `${x}px`;
-    popupElement.style.top = `${y}px`;
     const attributes = Array.from(element.attributes)
-      .filter((attr) => !isInWhiteList(attr.name, attr.value))
+      .map((attr) => removeBlackAttr(attr.name, attr.value))
+      .filter((attr) => attr.value !== "")
       .map((attr) =>
         attr.name === "class"
           ? splitClassValues(attr.value)
-          : `<div>${attr.name}:
-                           <span class="copyable" data-copy="${attr.value}">${attr.value}</span>
-                         </div>`
+          : `<div>${attr.name}: <span class="copyable" data-copy="${attr.value}">${attr.value}</span> </div>`
       )
       .join("");
 
@@ -233,39 +241,64 @@
       });
     });
 
-    const { innerWidth, innerHeight } = window;
-    const rect = popupElement.getBoundingClientRect();
-
-    // 修正位置
-    const adjustedX =
-      x + rect.width > innerWidth ? innerWidth - rect.width - 10 : x;
-    const adjustedY =
-      y + rect.height > innerHeight ? innerHeight - rect.height - 10 : y;
-
-    popupElement.style.left = `${adjustedX}px`;
-    popupElement.style.top = `${adjustedY}px`;
+    positionPopup(popupElement, x, y);
   }
+  function positionPopup(popup, x, y) {
+    const { innerWidth, innerHeight } = window;
+    const { scrollX, scrollY } = window; // 获取页面滚动位置
+    const rect = popup.getBoundingClientRect();
 
+    // 计算调整后的位置
+    const adjustedX =
+      x + rect.width > innerWidth + scrollX
+        ? innerWidth + scrollX - rect.width - 10
+        : x;
+    const adjustedY =
+      y + rect.height > innerHeight + scrollY
+        ? innerHeight + scrollY - rect.height - 10
+        : y;
+
+    popup.style.left = `${adjustedX}px`;
+    popup.style.top = `${adjustedY}px`;
+  }
   // 拆分 class 值
   function splitClassValues(classValue) {
     return classValue
       .split(/\s+/)
       .map(
-        (cls) => `<div>class:
-                              <span class="copyable" data-copy="${cls}">${cls}</span>
-                            </div>`
+        (cls) =>
+          `<div>class: <span class="copyable" data-copy="${cls}">${cls}</span></div>`
       )
       .join("");
   }
 
   // 自动生成 CSS 选择器
   function getCssSelector(element) {
-    const tag = element.tagName.toLowerCase();
-    const id = element.id ? `#${element.id}` : "";
-    const classes = element.className.trim().split(/\s+/).join(".");
-    return `${tag}${id || (classes ? "." + classes : "")}`;
+    return `${getTreeCssSelector(element.parentNode, 1)}${getElementCssSelector(
+      element
+    )}`;
   }
 
+  function getElementCssSelector(element) {
+    if (element === undefined || element.tagName === undefined) return "";
+    const tag = element.tagName.toLowerCase();
+    const id = element.id ? `#${element.id}` : "";
+    const classes = removeBlackAttr("class", element.className)
+      .value.split(/\s+/)
+      .join(".");
+    return `${tag}${id || (classes ? "." + classes : "")}`;
+  }
+  function getTreeCssSelector(element, deep = 2) {
+    if (element === undefined || element.tagName === undefined) return "";
+    const tag = element.tagName.toLowerCase();
+    const id = element.id ? `#${element.id}` : "";
+    const classes = removeBlackAttr("class", element.className)
+      .value.split(/\s+/)
+      .join(".");
+    if (deep > 0 && id === "" && classes === "")
+      return getTreeCssSelector(element.parentNode, deep - 1) + tag + " > ";
+    return `${tag}${id || (classes ? "." + classes : "")} > `;
+  }
   // 复制到剪贴板
   function copyToClipboard(text) {
     navigator.clipboard.writeText(text).catch((err) => {
