@@ -53,27 +53,6 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
   ${classModel.fields
     .map((f) => {
       return fromJsonParse(f, useAsKeyword);
-      // const dartType = getDartType(f);
-      // if (f.type === "array[object]") {
-      //   return `${f.name}: (json['${
-      //     f.name
-      //   }'] as List<dynamic>?)?.map((e) => ${getGenericType(
-      //     f
-      //   )}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
-      // } else if (dartType.startsWith("List")) {
-      //   const subType = getGenericType(f);
-      //   return `${f.name}: (json['${f.name}'] as List<dynamic>?)?.map((e) => e as ${subType}).toList() ?? []`;
-      // } else if (f.type === "object") {
-      //   return useAsKeyword
-      //     ? `${f.name}: ${dartType}.fromJson(json.getAsMap('${f.name}'))`
-      //     : `${f.name}: ${dartType}.fromJson(json['${f.name}'] as Map<String, dynamic>)`;
-      // } else {
-      //   return useAsKeyword
-      //     ? `${f.name}: json.getAs${window.parser.capitalize(dartType)}('${
-      //         f.name
-      //       }')`
-      //     : `${f.name}: json['${f.name}'] as ${dartType}?`;
-      // }
     })
     .join(",\n    ")}
 );`;
@@ -85,12 +64,18 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
     const genericType = getGenericType(field);
     if (type === "array[object]") {
       if (useAsKeyword) {
-        return `${name}: json.getAsList('${name}').map((e) => ${genericType}.fromJson(e)).toList(growable: false)`;
+        return `${name}: json.getAsList('${name}').map((e) => ${genericType}.fromJson(e)).toList()`;
       }
       return `${name}: (json['${name}'] as List<dynamic>?)?.map((e) => ${genericType}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
     } else if (type.startsWith("array")) {
+      if (!isBasicType(genericType)) {
+        if (useAsKeyword) {
+          return `${name}: json.getAsList('${name}').map((e) => ${genericType}.fromJson(e)).toList()`;
+        }
+        return `${name}: (json['${name}'] as List<dynamic>?)?.map((e) => ${genericType}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
+      }
       if (useAsKeyword) {
-        return `${name}: json.getAsList('${name}').map<${genericType}>((e) => e as ${genericType}).toList(growable: false)`;
+        return `${name}: json.getAsList('${name}').map<${genericType}>((e) => e as ${genericType}).toList()`;
       }
       return `${name}: (json['${name}'] as List<dynamic>?)?.map((e) => e as ${genericType}).toList() ?? []`;
     } else if (type === "object") {
