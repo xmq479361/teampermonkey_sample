@@ -20,7 +20,7 @@
     );
   }
 
-  function generateClassName(segments) {
+  function generateBasicClassName(segments) {
     const maxLength = 20;
     let className = "";
 
@@ -79,7 +79,7 @@
         let pathname = parsedUrl.pathname.replace(/%7B([a-zA-Z]+)%7D/, "");
         // console.log(">>pathname", parsedUrl.pathname, pathname);
         // Take the last 2-3 segments for the class name
-        const className = generateClassName(pathname.split("/").slice(-3));
+        const className = generateBasicClassName(pathname.split("/").slice(-3));
 
         results.push({ url, className });
       }
@@ -144,6 +144,7 @@
       let text = isVisible(element) ? element.textContent.trim() : "";
       return text.endsWith("复制") ? text.substring(0, text.length - 2) : text;
     }
+
     function generateClassName(name, parentName) {
       const className = name
         .split("_")

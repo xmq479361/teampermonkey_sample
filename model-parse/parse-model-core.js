@@ -18,7 +18,7 @@
     text.slice(1, 2).toLowerCase() +
     text.slice(2);
 
-  function generateClassName(segments) {
+  function generateBasicClassName(segments) {
     const maxLength = 20;
     let className = "";
 
@@ -68,7 +68,7 @@
         if (urlMatch) {
           const url = new URL(urlMatch[0]);
           const pathname = url.pathname.replace(/%7B([a-zA-Z]+)%7D/, "");
-          return generateClassName(pathname.split("/").slice(-3));
+          return generateBasicClassName(pathname.split("/").slice(-3));
         }
       }
     }
