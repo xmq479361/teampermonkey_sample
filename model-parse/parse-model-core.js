@@ -18,26 +18,31 @@
     text.slice(1, 2).toLowerCase() +
     text.slice(2);
 
-  const generateClassName = (segments) => {
+  function generateClassName(segments) {
     const maxLength = 20;
-    let className = segments
-      // .reverse()
-      .flatMap((segment) =>
-        segment.replace(/^(get|post|put|delete|patch|find)/i, "").split(/[-_]/)
-      )
-      .map(capitalize)
-      .join("");
+    let className = "";
 
-    className = className.slice(0, maxLength);
-
+    // Process segments from right to left
+    for (let i = segments.length - 1; i >= 0; i--) {
+      let segment = segments[i].replace(
+        /^(get|post|put|delete|patch|find|%7B)/i,
+        ""
+      );
+      const words = segment.split(/[-_]/).map((word) => capitalize(word));
+      for (const word of words) {
+        className = word + className;
+      }
+      if (className.length >= maxLength) {
+        break;
+      }
+    }
     if (
       !className.match(/(Data|Page|Info|Details|List|Collection|Set|Array)$/)
     ) {
-      className += "Model";
+      className = className + "Model";
     }
-
     return className;
-  };
+  }
 
   // Parser interface
   class Parser {
@@ -361,63 +366,63 @@ function getDartType(f) {
 }
 
 // For demonstration purposes, let's simulate parsing different data sources
-const tornaParser = window.parser.createParser("torna");
-const jsonParser = window.parser.createParser("json");
-const dartParser = window.parser.createParser("dart");
+// const tornaParser = window.parser.createParser("torna");
+// const jsonParser = window.parser.createParser("json");
+// const dartParser = window.parser.createParser("dart");
 
-const sampleHtml = `
-<ul>
-  <li>http://api.example.com/users/getProfile</li>
-</ul>
-<table>
-  <tr class="el-table__row--level-0">
-      <td>data</td>
-      <td>object</td>
-      <td>User data</td>
-  </tr>
-  <tr class="el-table__row--level-1">
-      <td>id</td>
-      <td>integer</td>
-      <td>User ID</td>
-  </tr>
-  <tr class="el-table__row--level-1">
-      <td>name</td>
-      <td>string</td>
-      <td>User name</td>
-  </tr>
-</table>
-`;
+// const sampleHtml = `
+// <ul>
+//   <li>http://api.example.com/users/getProfile</li>
+// </ul>
+// <table>
+//   <tr class="el-table__row--level-0">
+//       <td>data</td>
+//       <td>object</td>
+//       <td>User data</td>
+//   </tr>
+//   <tr class="el-table__row--level-1">
+//       <td>id</td>
+//       <td>integer</td>
+//       <td>User ID</td>
+//   </tr>
+//   <tr class="el-table__row--level-1">
+//       <td>name</td>
+//       <td>string</td>
+//       <td>User name</td>
+//   </tr>
+// </table>
+// `;
 
-const sampleJson = `
-{
-  "user": {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com",
-      "addresses": [
-          {
-              "street": "123 Main St",
-              "city": "Anytown"
-          }
-      ]
-  }
-}
-`;
+// const sampleJson = `
+// {
+//   "user": {
+//       "id": 1,
+//       "name": "John Doe",
+//       "email": "john@example.com",
+//       "addresses": [
+//           {
+//               "street": "123 Main St",
+//               "city": "Anytown"
+//           }
+//       ]
+//   }
+// }
+// `;
 
-const sampleDartClass = `
-class User {
-int? id;
-String? name;
-String? email;
-List<Address>? addresses;
-}
+// const sampleDartClass = `
+// class User {
+// int? id;
+// String? name;
+// String? email;
+// List<Address>? addresses;
+// }
 
-class Address {
-String? street;
-String? city;
-}
-`;
+// class Address {
+// String? street;
+// String? city;
+// }
+// `;
 
-console.log("Parsed Torna HTML:", tornaParser.parse(sampleHtml));
-console.log("Parsed JSON:", jsonParser.parse(sampleJson));
-console.log("Parsed Dart class:", dartParser.parse(sampleDartClass));
+// console.log("Parsed Torna HTML:", tornaParser.parse(sampleHtml));
+// console.log("Parsed JSON:", jsonParser.parse(sampleJson));
+// console.log("Parsed Dart class:", dartParser.parse(sampleDartClass));
