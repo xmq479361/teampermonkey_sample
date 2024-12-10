@@ -5,7 +5,7 @@
 // @description  Dart code generation for multi-source HTML to Dart Parser
 // @match        http://torna.tclpv.com/*
 // @match        https://apifox.com/*
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=6
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=7
 // ==/UserScript==
 
 (function () {
@@ -52,30 +52,60 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
     }(
   ${classModel.fields
     .map((f) => {
-      const dartType = getDartType(f);
-      if (f.type === "array[object]") {
-        return `${f.name}: (json['${
-          f.name
-        }'] as List<dynamic>?)?.map((e) => ${getGenericType(
-          f
-        )}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
-      } else if (dartType.startsWith("List")) {
-        const subType = getGenericType(f);
-        return `${f.name}: (json['${f.name}'] as List<dynamic>?)?.map((e) => e as ${subType}).toList() ?? []`;
-      } else if (f.type === "object") {
-        return useAsKeyword
-          ? `${f.name}: ${dartType}.fromJson(json.getAsMap('${f.name}'))`
-          : `${f.name}: ${dartType}.fromJson(json['${f.name}'] as Map<String, dynamic>)`;
-      } else {
-        return useAsKeyword
-          ? `${f.name}: json.getAs${window.parser.capitalize(dartType)}('${
-              f.name
-            }')`
-          : `${f.name}: json['${f.name}'] as ${dartType}?`;
-      }
+      return fromJsonParse(f, useAsKeyword);
+      // const dartType = getDartType(f);
+      // if (f.type === "array[object]") {
+      //   return `${f.name}: (json['${
+      //     f.name
+      //   }'] as List<dynamic>?)?.map((e) => ${getGenericType(
+      //     f
+      //   )}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
+      // } else if (dartType.startsWith("List")) {
+      //   const subType = getGenericType(f);
+      //   return `${f.name}: (json['${f.name}'] as List<dynamic>?)?.map((e) => e as ${subType}).toList() ?? []`;
+      // } else if (f.type === "object") {
+      //   return useAsKeyword
+      //     ? `${f.name}: ${dartType}.fromJson(json.getAsMap('${f.name}'))`
+      //     : `${f.name}: ${dartType}.fromJson(json['${f.name}'] as Map<String, dynamic>)`;
+      // } else {
+      //   return useAsKeyword
+      //     ? `${f.name}: json.getAs${window.parser.capitalize(dartType)}('${
+      //         f.name
+      //       }')`
+      //     : `${f.name}: json['${f.name}'] as ${dartType}?`;
+      // }
     })
     .join(",\n    ")}
 );`;
+  }
+
+  function fromJsonParse(field, useAsKeyword) {
+    const { type, typeStr, name } = field;
+    const dartType = getDartType(field);
+    const genericType = getGenericType(field);
+    if (type === "array[object]") {
+      if (useAsKeyword) {
+        return `${name}: json.getAsList('${name}').map((e) => ${genericType}.fromJson(e)).toList(growable: false)`;
+      }
+      return `${name}: (json['${name}'] as List<dynamic>?)?.map((e) => ${genericType}.fromJson(e as Map<String, dynamic>)).toList() ?? []`;
+    } else if (type.startsWith("array")) {
+      if (useAsKeyword) {
+        return `${name}: json.getAsList('${name}').map<${genericType}>((e) => e as ${genericType}).toList(growable: false)`;
+      }
+      return `${name}: (json['${name}'] as List<dynamic>?)?.map((e) => e as ${genericType}).toList() ?? []`;
+    } else if (type === "object") {
+      return useAsKeyword
+        ? `${name}: ${dartType}.fromJson(json.getAsMap('${name}'))`
+        : `${name}: ${dartType}.fromJson(json['${name}'] as Map<String, dynamic>)`;
+    } else {
+      return useAsKeyword
+        ? `${name}: json.getAs${window.parser.capitalize(dartType)}('${name}')`
+        : `${name}: json['${name}'] as ${dartType}?`;
+    }
+  }
+
+  function isBasicType(type) {
+    return ["integer", "number", "boolean", "string"].includes(type);
   }
 
   function generateToJson(classModel) {
@@ -145,6 +175,9 @@ ${classModel.className} copyWith({
       case "object":
         return fields && fields.length > 0 ? typeStr : "Map<String, dynamic>";
       default:
+        if (type.startsWith("array")) {
+          return typeStr || "List";
+        }
         return "String";
     }
   }
@@ -196,37 +229,44 @@ ${classModel.className} copyWith({
 })();
 
 // For demonstration purposes, let's generate some sample Dart code
-const sampleClassMap = new Map([
-  [
-    "UserModel",
-    {
-      className: "UserModel",
-      fields: [
-        { name: "id", type: "integer", description: "User ID" },
-        { name: "name", type: "string", description: "User name" },
-        { name: "email", type: "string", description: "User email" },
-        {
-          name: "addresses",
-          type: "array[object]",
-          description: "User addresses",
-          className: "AddressModel",
-        },
-      ],
-    },
-  ],
-  [
-    "AddressModel",
-    {
-      className: "AddressModel",
-      fields: [
-        { name: "street", type: "string", description: "Street name" },
-        { name: "city", type: "string", description: "City name" },
-      ],
-    },
-  ],
-]);
+// const sampleClassMap = new Map([
+//   [
+//     "UserModel",
+//     {
+//       className: "UserModel",
+//       fields: [
+//         { name: "id", type: "integer", description: "User ID" },
+//         { name: "name", type: "string", description: "User name" },
+//         { name: "email", type: "string", description: "User email" },
+//         {
+//           name: "addresses",
+//           type: "array[integer]",
+//           description: "User addresses",
+//           className: "AddressModel",
+//           typeStr: "List<String>",
+//         },
+//         {
+//           name: "homeAddresses",
+//           type: "array[object]",
+//           description: "User home addresses",
+//           typeStr: "List<AddressModel>",
+//         },
+//       ],
+//     },
+//   ],
+//   [
+//     "AddressModel",
+//     {
+//       className: "AddressModel",
+//       fields: [
+//         { name: "street", type: "string", description: "Street name" },
+//         { name: "city", type: "string", description: "City name" },
+//       ],
+//     },
+//   ],
+// ]);
 
-const generatedCode = window.dartGenerator.generateDartCode(sampleClassMap);
-const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
-console.log("Generated Dart code:");
-console.log(formattedCode);
+// const generatedCode = window.dartGenerator.generateDartCode(sampleClassMap, true);
+// const formattedCode = window.dartGenerator.formatDartCode(generatedCode);
+// console.log("Generated Dart code:");
+// console.log(formattedCode);
