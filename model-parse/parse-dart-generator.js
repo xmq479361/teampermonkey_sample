@@ -51,9 +51,7 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
       classModel.className
     }(
   ${classModel.fields
-    .map((f) => {
-      return fromJsonParse(f, useAsKeyword);
-    })
+    .map((f) => fromJsonParse(f, useAsKeyword))
     .join(",\n    ")}
 );`;
   }
@@ -79,6 +77,10 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
       }
       return `${name}: (json['${name}'] as List<dynamic>?)?.map((e) => e as ${genericType}).toList() ?? []`;
     } else if (type === "object") {
+      // dynamic
+      if (field.fields.length <= 0) {
+        return `${name}: json['${name}']`;
+      }
       return useAsKeyword
         ? `${name}: ${dartType}.fromJson(json.getAsMap('${name}'))`
         : `${name}: ${dartType}.fromJson(json['${name}'] as Map<String, dynamic>)`;
@@ -107,10 +109,10 @@ factory ${classModel.className}.fromJson(Map<String, dynamic> json) => ${
 Map<String, dynamic> toJson() => {
   ${classModel.fields
     .map((f) => {
-      const dartType = getDartType(f);
+      // const dartType = getDartType(f);
       if (f.type == "array[object]") {
         return `'${f.name}': ${f.name}?.map((e) => e.toJson()).toList()`;
-      } else if (f.type === "object") {
+      } else if (f.type === "object" && f.fields.length > 0) {
         return `'${f.name}': ${f.name}?.toJson() ?? {}`;
       } else {
         return `'${f.name}': ${f.name}`;
@@ -154,6 +156,7 @@ ${classModel.className} copyWith({
     return formattedLines.join("\n");
   }
 
+  
   function getDartType(f) {
     const { type, typeStr, fields } = f;
     switch (type.toLowerCase()) {
@@ -167,7 +170,7 @@ ${classModel.className} copyWith({
       case "array[object]":
         return typeStr || "List";
       case "object":
-        return fields && fields.length > 0 ? typeStr : "Map<String, dynamic>";
+        return fields && fields.length > 0 ? typeStr : "dynamic";
       default:
         if (type.startsWith("array")) {
           return typeStr || "List";

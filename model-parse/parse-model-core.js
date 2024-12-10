@@ -129,7 +129,7 @@
 
         if (type === "object" || type.startsWith("array")) {
           field.fields = [];
-          field.className = generateClassName([name, baseName]);
+          field.className = generateClassName(name, baseName);
 
           const isBasicType =
             type.startsWith("array") &&
@@ -368,8 +368,11 @@ function getDartType(f) {
     case "array[object]":
       return typeStr || "List";
     case "object":
-      return fields && fields.length > 0 ? typeStr : "Map<String, dynamic>";
+      return fields && fields.length > 0 ? typeStr : "dynamic";
     default:
+      if (type.startsWith("array")) {
+        return typeStr || "List";
+      }
       return "String";
   }
 }
