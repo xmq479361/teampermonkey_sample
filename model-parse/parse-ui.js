@@ -3,13 +3,13 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.6
 // @description  UI components for multi-source HTML to Dart Parser
-// @match        http://torna.tclpv.com/*
-// @match        http://apifox.com/*
+// @match        *://torna.tclpv.com/*
+// @match        *://apifox.com/*
 // @grant        GM_setClipboard
 // @grant        GM_getClipboard
 // @grant        GM_addStyle
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=7
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=7
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=10
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-dart-generator.js?t=10
 // ==/UserScript==
 
 (function () {

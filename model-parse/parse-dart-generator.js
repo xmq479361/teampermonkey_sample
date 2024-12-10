@@ -3,9 +3,9 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.6
 // @description  Dart code generation for multi-source HTML to Dart Parser
-// @match        http://torna.tclpv.com/*
-// @match        https://apifox.com/*
-// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=7
+// @match        *://torna.tclpv.com/*
+// @match        *://apifox.com/*
+// @require      https://raw.githubusercontent.com/xmq479361/teampermonkey_sample/refs/heads/main/model-parse/parse-model-core.js?t=10
 // ==/UserScript==
 
 (function () {
@@ -148,15 +148,12 @@ ${classModel.className} copyWith({
         return indentedLine;
       } else if (line.startsWith("}")) {
         indentLevel = Math.max(0, indentLevel - 1);
-        return "  ".repeat(indentLevel) + line;
-      } else {
-        return "  ".repeat(indentLevel) + line;
       }
+      return "  ".repeat(indentLevel) + line;
     });
     return formattedLines.join("\n");
   }
 
-  
   function getDartType(f) {
     const { type, typeStr, fields } = f;
     switch (type.toLowerCase()) {

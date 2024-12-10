@@ -3,8 +3,8 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.7
 // @description  Core functionality for parsing various data sources and generating Dart models
-// @match        http://torna.tclpv.com/*
-// @match        https://apifox.com/*
+// @match        *://torna.tclpv.com/*
+// @match        *://apifox.com/*
 // ==/UserScript==
 
 (function () {
@@ -177,10 +177,61 @@
 
   // Apifox Parser
   class ApifoxParser extends Parser {
-    parse(data) {
-      // Implement Apifox parsing logic here
-      // This is a placeholder and should be replaced with actual implementation
-      return { rootModel: {}, classMap: new Map() };
+    parse() {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(
+        document.querySelector("#rc-tabs-0-panel-BLANK.579666463 > div.w-full")
+          .innerHTML,
+        "text/html"
+      );
+      const rootNode = doc.querySelector(".JsonSchemaViewer");
+      return this.parseNode(rootNode);
+    }
+
+    parseNode(node) {
+      const result = {};
+      const children = node.querySelectorAll(
+        ':scope > [data-level="0"] > .index_child-stack__WPMqo > .index_node__G6-Qx'
+      );
+
+      children.forEach((child) => {
+        const nameElement = child.querySelector(
+          ".PropertyNameRender_propertyName__3nXIr"
+        );
+        if (!nameElement) return;
+
+        const name = nameElement.textContent.trim();
+        const typeElement = child.querySelector(".sl-text-muted-big.sl-type");
+        const type = typeElement ? typeElement.textContent.trim() : "object";
+        const descriptionElement = child.querySelector(
+          ".index_additionalInformation__title__cjvSn"
+        );
+        const description = descriptionElement
+          ? descriptionElement.getAttribute("title")
+          : "";
+        const isOptional =
+          child.querySelector(".index_optional__O33wK") !== null;
+
+        let value;
+        if (type.includes("object")) {
+          const subNode = child.querySelector(":scope > .sl-flex > .sl-flex-1");
+          value = this.parseNode(subNode);
+        } else if (type.includes("array")) {
+          const subNode = child.querySelector(":scope > .sl-flex > .sl-flex-1");
+          value = [this.parseNode(subNode)];
+        } else {
+          value = null;
+        }
+
+        result[name] = {
+          type: type,
+          description: description,
+          optional: isOptional,
+          value: value,
+        };
+      });
+
+      return result;
     }
   }
 
