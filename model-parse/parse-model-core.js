@@ -43,6 +43,15 @@
     }
     return className;
   }
+  function generateClassName(name, parentName) {
+    const className = name
+      .split("_")
+      .map((part) => capitalize(part))
+      .join("");
+
+    if (debug) console.log("generateClassName: ", name, parentName, className);
+    return parentName + className;
+  }
 
   // Parser interface
   class Parser {
